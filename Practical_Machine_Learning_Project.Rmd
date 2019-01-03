@@ -5,13 +5,20 @@ date: "January 3, 2019"
 output: html_document
 ---
 
+<style type="text/css">
+
+h1{
+      margin-top: 2em;
+  }
+
+</style>
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Purpose
+# Purpose
 The purpose of this analysis is to predict the class of physical activity.
-
 
 **Background**
 
@@ -29,7 +36,7 @@ Your submission for the Peer Review portion should consist of a link to a Github
 
 Apply your machine learning algorithm to the 20 test cases available in the test data above and submit your predictions in appropriate format to the Course Project Prediction Quiz for automated grading.
 
-## Load libraries {.smaller}
+# Load libraries
 
 ```{r, echo = TRUE, warning=FALSE}
 
@@ -39,7 +46,7 @@ library(caret)
 ```
 
 
-## Get Data {.smaller}
+# Get Data
 
 Download data and load into variables.
 
@@ -61,7 +68,7 @@ for (URL in URLs) {
 ```
 
 
-## Clean Data {.smaller}
+# Clean Data
 
 Remove observations and variables not useful for modelling.
 
@@ -88,7 +95,7 @@ for (regpat in regpats) {
 ```
 
 
-## Split into training and validation data sets {.smaller}
+# Split into training and validation data sets
 
 Split observations into train data set for model fitting and validate for benchmarking models.
 
@@ -106,7 +113,8 @@ data_validate <- train_validate[-trainIndex,]
 ```
 
 
-## Feature creation {.smaller}
+
+# Feature creation
 
 Create new features/variables, which potentially have better predictive power than the "native" predictors.
 I will create new variables, which contain the product of gyros, accel and magment in the three axes.
@@ -116,6 +124,7 @@ accel_PRODUCT_x = accel_belt_x * accel_arm_x * accel_dumbell_x * accel_forearm_x
 
 ```{r, echo = TRUE}
 
+# Function to add new features
 addfeatures <- function(dataset) {
   metrics <- c("gyros", "accel", "magnet")
   axes <- c("x", "y", "z")
@@ -132,6 +141,33 @@ addfeatures <- function(dataset) {
   }
   dataset
 }
+
+# Add features to data_train and data_validate
+data_train <- addfeatures(data_train)
+data_validate <- addfeatures(data_validate)
+
+
+```
+
+
+# Variable normalization
+
+Normalize (center and scale) variables. Normalization parameters are based on training dataset, same parameters
+must be used on validation and test data.
+
+```{r, echo = TRUE}
+
+# Specify which columns to normalize, in this case all but classe
+all_cols <- names(data_train)
+normalize_cols <- all_cols[!(all_cols %in% c("classe"))]
+
+# Create normalization object, based on training data
+normalize_object <- preProcess(data_train[, normalize_cols], method = c("center", "scale"))
+
+# Normalize training and validation data
+data_train[, normalize_cols] <- predict(normalize_object, data_train[, normalize_cols])
+data_validate[, normalize_cols] <- predict(normalize_object, data_validate[, normalize_cols])
+
 
 
 ```

@@ -115,4 +115,35 @@ data_validate <- train_validate[-trainIndex,]
 ```
 
 
+## Feature creation {.smaller}
+
+Create new features/variables, which potentially have better predictive power than the "native" predictors.
+I will create new variables, which contain the product of gyros, accel and magment in the three axes.
+Example:
+
+accel_PRODUCT_x = accel_belt_x * accel_arm_x * accel_dumbell_x * accel_forearm_x
+
+```{r, echo = TRUE}
+
+addfeatures <- function(dataset) {
+  metrics <- c("gyros", "accel", "magnet")
+  axes <- c("x", "y", "z")
+  for (metric in metrics) {
+    for (axis in axes) {
+      productcolumn <- paste(metric,"_PRODUCT_", axis, sep = "")
+      beltcolumn <- paste(metric,"_belt_", axis, sep = "")
+      armcolumn <- paste(metric,"_arm_", axis, sep = "")
+      dumbbellcolumn <- paste(metric,"_dumbbell_", axis, sep = "")
+      forearmcolumn <- paste(metric,"_forearm_", axis, sep = "")
+      dataset[,productcolumn] <- as.numeric(dataset[,beltcolumn]) * as.numeric(dataset[,armcolumn]) *
+        as.numeric(dataset[,dumbbellcolumn]) * as.numeric(dataset[,forearmcolumn])
+    }
+  }
+  dataset
+}
+
+
+```
+
+
 
