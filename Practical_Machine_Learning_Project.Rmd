@@ -45,6 +45,7 @@ library(caret)
 library(Boruta)
 library(factoextra)
 library(corrplot)
+library(doParallel)
 
 ```
 
@@ -256,4 +257,85 @@ corrplot(cor(corvars), type = "upper")
 ```
 
 As expected, there is no colinearirity between the Pricipal Components.
+
+
+
+# Model building
+
+Build different models on training set and select the model that works best on validation data.
+
+```{r, echo = TRUE}
+
+# Number of cores allowed for parallel processing
+parallelCoreCnt = 8
+
+# Enable parallel
+cl <- makePSOCKcluster(parallelCoreCnt)
+registerDoParallel(cl)
+
+
+# Data sets to include in model building
+modeldatasets <- c("data_train", "data_validate")
+
+# Function to train model and log result
+trainModel <- function(methodtag, methodname, tunegrid = c(), logging = FALSE, method = "repeatedcv", number = 10, repeats = 10){
+
+  trainSetting <- trainControl(method, number, repeats, search = "grid", allowParallel = TRUE)
+  
+  cat(paste("Training model with method ", method, "\n", sep = ""))
+  cat(paste("Number = ", number, "\n", sep = ""))
+  cat(paste("Repeats = ", repeats, "\n", sep = ""))
+
+
+  # Train model on training data
+  set.seed(1)
+  if (!is.null(tunegrid)) {
+      TrainedModel <- train(classe ~ ., method = methodtag, data = data_train, tuneGrid = tunegrid, trControl = trainSetting)
+  } else {
+    TrainedModel <- train(classe ~ ., method = methodtag, data = data_train, trControl = trainSetting)
+  }
+  
+
+  # Use model to predict on train and validate data, log results
+  for (modeldataset in modeldatasets) {
+
+    cat(paste("\n*** Results on ", modeldataset, ": ***\n\n", sep = ""))
+
+    assign("modeldata", get(modeldataset))
+    
+    # Create prediction
+    Prediction <- predict(TrainedModel, modeldata)
+    modeldata <- cbind(modeldata, Prediction)
+    
+    # Select prediction and case ID for cost estimation
+#    modelprediction <- modeldata %>% dplyr::select(c(CAS_ID, Prediction))
+
+    # Log result
+#    costestimate <- EstimateAverageCost(modelprediction, logresult = logging, modelname = methodname, datasetname = modeldataset)
+
+  }
+
+  # Return trained model
+  TrainedModel
+}
+
+
+# K-Nearest Neighbors
+
+methodtag <- "knn"
+methodname <- "K-Nearest Neighbors"
+reps <- 1
+
+# Model specific training grid setting
+tunegrid <- expand.grid(.k=c(1:5))
+
+TrainedModel <- trainModel(methodtag, methodname, tunegrid, logging = TRUE, repeats = reps)
+TrainedModel
+plot(TrainedModel, main = paste(methodname, reps, "repeats"))
+
+
+
+
+```
+
 
