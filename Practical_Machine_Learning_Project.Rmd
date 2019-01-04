@@ -46,6 +46,7 @@ library(Boruta)
 library(factoextra)
 library(corrplot)
 library(doParallel)
+library(RWeka)
 
 ```
 
@@ -278,23 +279,23 @@ registerDoParallel(cl)
 modeldatasets <- c("data_train", "data_validate")
 
 # Function to train model and log result
-trainModel <- function(methodtag, methodname, tunegrid = c(), logging = FALSE, method = "repeatedcv", number = 10, repeats = 10){
+trainModel <- function(methodtag, methodname, tunegrid = NULL, method = "repeatedcv", folds = 10, repeats = 10){
 
-  trainSetting <- trainControl(method, number, repeats, search = "grid", allowParallel = TRUE)
+  trainSetting <- trainControl(method, folds, repeats, search = "grid", allowParallel = TRUE, verboseIter = TRUE)
   
-  cat(paste("Training model with method ", method, "\n", sep = ""))
-  cat(paste("Number = ", number, "\n", sep = ""))
+  cat(paste("Training model ", methodtag," with method ", method, "\n", sep = ""))
+  cat(paste("Folds = ", folds, "\n", sep = ""))
   cat(paste("Repeats = ", repeats, "\n", sep = ""))
 
 
   # Train model on training data
   set.seed(1)
-  if (!is.null(tunegrid)) {
-      TrainedModel <- train(classe ~ ., method = methodtag, data = data_train, tuneGrid = tunegrid, trControl = trainSetting)
-  } else {
-    TrainedModel <- train(classe ~ ., method = methodtag, data = data_train, trControl = trainSetting)
-  }
+  TrainedModel <- train(classe ~ ., method = methodtag, data = data_train, tuneGrid = tunegrid, trControl = trainSetting)
   
+  # Save model with unique name
+  modelname <- paste("model_", methodtag, sep = "")
+  assign(modelname, TrainedModel)
+
 
   # Use model to predict on train and validate data, log results
   for (modeldataset in modeldatasets) {
@@ -305,14 +306,9 @@ trainModel <- function(methodtag, methodname, tunegrid = c(), logging = FALSE, m
     
     # Create prediction
     Prediction <- predict(TrainedModel, modeldata)
-    modeldata <- cbind(modeldata, Prediction)
-    
-    # Select prediction and case ID for cost estimation
-#    modelprediction <- modeldata %>% dplyr::select(c(CAS_ID, Prediction))
 
-    # Log result
-#    costestimate <- EstimateAverageCost(modelprediction, logresult = logging, modelname = methodname, datasetname = modeldataset)
-
+    # Print confution matrics and model performance metrics
+    print(confusionMatrix(Prediction, modeldata$classe))
   }
 
   # Return trained model
@@ -324,16 +320,126 @@ trainModel <- function(methodtag, methodname, tunegrid = c(), logging = FALSE, m
 
 methodtag <- "knn"
 methodname <- "K-Nearest Neighbors"
-reps <- 1
+reps <- 10
 
 # Model specific training grid setting
-tunegrid <- expand.grid(.k=c(1:5))
+tunegrid <- expand.grid(.k=c(1:4))
+#tunegrid <- NULL
 
-TrainedModel <- trainModel(methodtag, methodname, tunegrid, logging = TRUE, repeats = reps)
+TrainedModel <- trainModel(methodtag, methodname, tunegrid, repeats = reps)
 TrainedModel
 plot(TrainedModel, main = paste(methodname, reps, "repeats"))
 
 
+# Random Forests
+
+methodtag <- "rf"
+methodname <- "Random Forests"
+folds <- 2
+reps <- 2
+
+# Model specific training grid setting
+tunegrid <- expand.grid(.mtry=c(1:10))
+
+TrainedModel <- trainModel(methodtag, methodname, tunegrid, folds = folds, repeats = reps)
+TrainedModel
+plot(TrainedModel, main = paste(methodname, reps, "repeats"))
+
+
+
+# Logistic Model Trees
+
+methodtag <- "LMT"
+methodname <- "Logistic Model Trees"
+reps <- 5
+
+TrainedModel <- trainModel(methodtag, methodname, repeats = reps)
+TrainedModel
+plot(TrainedModel, main = paste(methodname, reps, "repeats"))
+
+#########################################################################
+
+
+#
+##
+###
+#### Logistric Regression ####
+
+methodtag <- "glm"
+methodname <- "Logistric Regression"
+reps <- 10
+
+TrainedModel <- trainModel(methodtag, methodname, logging = TRUE, repeats = reps)
+TrainedModel
+
+finalModel.glm = TrainedModel
+
+
+#
+##
+###
+#### Naive Bayes ####
+
+methodtag <- "nb"
+methodname <- "Naive Bayes"
+reps <- 10
+
+TrainedModel <- trainModel(methodtag, methodname, logging = TRUE, repeats = reps)
+TrainedModel
+
+finalModel.nb = TrainedModel
+
+
+#
+##
+###
+#### SVM ####
+methodtag <- "svmLinear"
+methodname <- "Support Vector Machine"
+reps <- 10
+
+TrainedModel <- trainModel(methodtag, methodname, logging = TRUE, repeats = reps)
+TrainedModel
+
+finalModel.svm = TrainedModel
+
+#
+##
+###
+#### Linear Discriminant Analysis ####
+methodtag <- "lda"
+methodname <- "Linear Discriminant Analysis"
+reps <- 10
+
+TrainedModel <- trainModel(methodtag, methodname, logging = TRUE, repeats = reps)
+TrainedModel
+
+finalModel.lda = TrainedModel
+
+#
+##
+###
+#### Quadratic Discriminant Analysis ####
+methodtag <- "qda"
+methodname <- "Quadratic Discriminant Analysis"
+reps <- 10
+
+#selecting subset of variables, since using all variables is creating errors
+selectedPreds = c(
+  'PRO_msrp',
+  'CAS_Initial_Return_Code_C2',
+  'CAS_Initial_Return_Code_C5',
+  'CAS_WarrantyStatus_N',
+  'PRO_Segment_PND',
+  'PRO_Family_FIT_VIVOSMART',
+  'PRO_Family_PND_Advance',
+  'PRO_SFPP_Market_DEF',
+  'PRO_SFPP_Market_FIT',
+  'PRO_WPC_Product_Series_vivosmarthr',
+  'PC1')
+
+TrainedModel <- trainModel(methodtag, methodname, logging = F, repeats = reps, onlycolumns = selectedPreds)
+TrainedModel
 
 
 ```
