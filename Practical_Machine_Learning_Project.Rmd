@@ -44,6 +44,7 @@ library(dplyr, warn.conflicts = FALSE)
 library(caret)
 library(Boruta)
 library(factoextra)
+library(corrplot)
 
 ```
 
@@ -182,11 +183,11 @@ Use the Boruta package to identify variables correlated with classe.
 ```{r, echo = TRUE}
 
 # Run Boruta
-boruta_train <- Boruta(classe ~ ., data = data_train)
+#boruta_train <- Boruta(classe ~ ., data = data_train)
 
 # Print result
-print(boruta_train)
-plot(boruta_train)
+#print(boruta_train)
+#plot(boruta_train)
 
 ```
 
@@ -218,19 +219,41 @@ get_eigenvalue(PCAobject)
 
 ```
 
-71.5% of variance is explained by the first 10 Principal Components, I will use these first 10 PCs.
+95.3% of variance is explained by the first 30 Principal Components, I will use these first 30 PCs.
 
 ```{r, echo = TRUE}
 
+PCsIncluded <- 30
+
 # Calculate PCA columns
-PC_train <- as.data.frame(predict(PCAobject, data_train))[,1:10]
-PC_validate <- as.data.frame(predict(PCAobject, data_validate))[,1:10]
+PC_train <- as.data.frame(predict(PCAobject, data_train))[,1:PCsIncluded]
+PC_validate <- as.data.frame(predict(PCAobject, data_validate))[,1:PCsIncluded]
 
 # Update training and validation data sets to contain only classe and PCs
-data_train <-cbind(data_train$classe, PC_train)
-data_validate <-cbind(data_validate$classe, PC_validate)
+data_train <-cbind(data_train$classe, PC_train) %>% rename(classe = 'data_train$classe')
+data_validate <-cbind(data_validate$classe, PC_validate) %>% rename(classe = 'data_validate$classe')
 
 ```
 
 
+
+# Check for colinearity between predictors
+
+Many Machine Learning models do not work well with correlated predictors, I need to check for colinearity.
+
+```{r, echo = TRUE}
+
+# Check for colinearity between all but classe
+all_cols <- names(data_train)
+cor_input <- all_cols[!(all_cols %in% c("classe"))]
+
+# Extract data frame with only predictors (all for PCA)
+corvars <- data_train %>%
+  select(cor_input)
+
+corrplot(cor(corvars), type = "upper")
+
+```
+
+As expected, there is no colinearirity between the Pricipal Components.
 
