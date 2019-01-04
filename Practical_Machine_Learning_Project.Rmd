@@ -42,6 +42,8 @@ Apply your machine learning algorithm to the 20 test cases available in the test
 
 library(dplyr, warn.conflicts = FALSE)
 library(caret)
+library(Boruta)
+library(factoextra)
 
 ```
 
@@ -169,6 +171,64 @@ data_train[, normalize_cols] <- predict(normalize_object, data_train[, normalize
 data_validate[, normalize_cols] <- predict(normalize_object, data_validate[, normalize_cols])
 
 
+
+```
+
+
+# Select variables with predictive power
+
+Use the Boruta package to identify variables correlated with classe.
+
+```{r, echo = TRUE}
+
+# Run Boruta
+boruta_train <- Boruta(classe ~ ., data = data_train)
+
+# Print result
+print(boruta_train)
+plot(boruta_train)
+
+```
+
+None of the predictors can be eliminated by Boruta.
+
+
+# Principal Component Analysis (PCA)
+
+Investigate if the number of variables can be reduced to fewer Principal Components while still explaining most of the variance.
+
+```{r, echo = TRUE}
+
+# Use all but classe for PCA
+all_cols <- names(data_train)
+PCA_input <- all_cols[!(all_cols %in% c("classe"))]
+
+# Extract data frame with only predictors (all for PCA)
+predictorvars <- data_train %>%
+  select(PCA_input)
+
+# Create PCA object
+PCAobject <- prcomp(predictorvars)
+
+# Scree plot
+fviz_eig(PCAobject)
+
+# Get Eigen values and variance explained
+get_eigenvalue(PCAobject)
+
+```
+
+71.5% of variance is explained by the first 10 Principal Components, I will use these first 10 PCs.
+
+```{r, echo = TRUE}
+
+# Calculate PCA columns
+PC_train <- as.data.frame(predict(PCAobject, data_train))[,1:10]
+PC_validate <- as.data.frame(predict(PCAobject, data_validate))[,1:10]
+
+# Update training and validation data sets to contain only classe and PCs
+data_train <-cbind(data_train$classe, PC_train)
+data_validate <-cbind(data_validate$classe, PC_validate)
 
 ```
 
