@@ -174,11 +174,11 @@ Use the Boruta package to identify variables correlated with classe.
 ```{r, echo = TRUE}
 
 # Run Boruta
-#boruta_train <- Boruta(classe ~ ., data = data_train)
+boruta_train <- Boruta(classe ~ ., data = data_train)
 
 # Print result
-#print(boruta_train)
-#plot(boruta_train)
+print(boruta_train)
+plot(boruta_train)
 
 ```
 
