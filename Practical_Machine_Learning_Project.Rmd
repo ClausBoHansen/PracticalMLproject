@@ -1,7 +1,7 @@
 ---
 title: "Practical Machine Learning Project"
 author: "Claus Bo Hansen"
-date: "January 3, 2019"
+date: "January 7, 2019"
 output: html_document
 ---
 
@@ -357,23 +357,37 @@ plot(TrainedModel, main = paste(methodname, reps, "repeats"))
 
 
 
-#### Logistic Model Trees ####
-
-methodtag <- "LMT"
-methodname <- "Logistic Model Trees"
-reps <- 5
-
-# Model specific training grid setting
-tunegrid <- expand.grid(.iter=seq(40,90, by = 10))
-
-
-TrainedModel <- trainModel(methodtag, methodname, tunegrid, repeats = reps)
-print(TrainedModel)
-plot(TrainedModel, main = paste(methodname, reps, "repeats"))
-
-
-
-
 ```
 
+Of the two presented model, KNN and Random Forests, KNN clearly performs best. So I select KNN with 1 neighbor as the final model.
 
+# Predictions on test set
+
+```{r, echo = TRUE}
+
+# Load model
+load("model_knn.RData")
+
+data_test <- `pml-testing`
+
+# Remove columns matching patterns in regpats
+for (regpat in regpats) {
+  data_test <- data_test[,!grepl(regpat, names(data_test))]
+}
+
+# Add features
+data_test <- addfeatures(data_test)
+
+# Normalize data
+data_test[, normalize_cols] <- predict(normalize_object, data_test[, normalize_cols])
+
+# Set data_test to PCs
+data_test <- as.data.frame(predict(PCAobject, data_test))[,1:PCsIncluded]
+
+# Predict for test test
+Prediction <- predict(TrainedModel, data_test)
+
+# Print predictions
+print(Prediction)
+
+```
