@@ -288,13 +288,23 @@ trainModel <- function(methodtag, methodname, tunegrid = NULL, method = "repeate
   cat(paste("Repeats = ", repeats, "\n", sep = ""))
 
 
-  # Train model on training data
-  set.seed(1)
-  TrainedModel <- train(classe ~ ., method = methodtag, data = data_train, tuneGrid = tunegrid, trControl = trainSetting)
-  
   # Save model with unique name
   modelname <- paste("model_", methodtag, sep = "")
-  assign(modelname, TrainedModel)
+  filename <- paste(modelname, ".RData", sep = "")
+  if (file.exists(filename)) {
+    # Load model from file
+    cat(paste("\nLoading model from ", filename, "\n", sep = ""))
+    load(filename)
+  } else {
+    # Train model and save it to file
+    set.seed(1)
+    TrainedModel <- train(classe ~ ., method = methodtag, data = data_train, tuneGrid = tunegrid, trControl = trainSetting)
+    assign(modelname, TrainedModel)
+    cat(paste("\nSaving model to ", filename, "\n", sep = ""))
+    save(modelname, file = filename)
+    
+  }
+  
 
 
   # Use model to predict on train and validate data, log results
@@ -321,6 +331,7 @@ trainModel <- function(methodtag, methodname, tunegrid = NULL, method = "repeate
 methodtag <- "knn"
 methodname <- "K-Nearest Neighbors"
 reps <- 10
+reps <- 2
 
 # Model specific training grid setting
 tunegrid <- expand.grid(.k=c(1:4))
