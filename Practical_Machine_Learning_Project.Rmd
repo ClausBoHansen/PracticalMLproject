@@ -283,7 +283,7 @@ trainModel <- function(methodtag, methodname, tunegrid = NULL, method = "repeate
 
   trainSetting <- trainControl(method, folds, repeats, search = "grid", allowParallel = TRUE, verboseIter = TRUE)
   
-  cat(paste("Training model ", methodtag," with method ", method, "\n", sep = ""))
+  cat(paste("Creating model ", methodtag," with method ", method, "\n", sep = ""))
   cat(paste("Folds = ", folds, "\n", sep = ""))
   cat(paste("Repeats = ", repeats, "\n", sep = ""))
 
@@ -294,14 +294,14 @@ trainModel <- function(methodtag, methodname, tunegrid = NULL, method = "repeate
   if (file.exists(filename)) {
     # Load model from file
     cat(paste("\nLoading model from ", filename, "\n", sep = ""))
-    load(filename)
+    load(filename, verbose = TRUE)
   } else {
     # Train model and save it to file
     set.seed(1)
     TrainedModel <- train(classe ~ ., method = methodtag, data = data_train, tuneGrid = tunegrid, trControl = trainSetting)
     assign(modelname, TrainedModel)
     cat(paste("\nSaving model to ", filename, "\n", sep = ""))
-    save(modelname, file = filename)
+    save(TrainedModel, file = filename)
     
   }
   
@@ -326,131 +326,52 @@ trainModel <- function(methodtag, methodname, tunegrid = NULL, method = "repeate
 }
 
 
-# K-Nearest Neighbors
+#### K-Nearest Neighbors ####
 
 methodtag <- "knn"
 methodname <- "K-Nearest Neighbors"
 reps <- 10
-reps <- 2
 
 # Model specific training grid setting
 tunegrid <- expand.grid(.k=c(1:4))
-#tunegrid <- NULL
 
 TrainedModel <- trainModel(methodtag, methodname, tunegrid, repeats = reps)
-TrainedModel
+print(TrainedModel)
 plot(TrainedModel, main = paste(methodname, reps, "repeats"))
 
 
-# Random Forests
+
+#### Random Forests ####
 
 methodtag <- "rf"
 methodname <- "Random Forests"
-folds <- 2
-reps <- 2
+folds <- 10
+reps <- 5
 
 # Model specific training grid setting
 tunegrid <- expand.grid(.mtry=c(1:10))
 
 TrainedModel <- trainModel(methodtag, methodname, tunegrid, folds = folds, repeats = reps)
-TrainedModel
+print(TrainedModel)
 plot(TrainedModel, main = paste(methodname, reps, "repeats"))
 
 
 
-# Logistic Model Trees
+#### Logistic Model Trees ####
 
 methodtag <- "LMT"
 methodname <- "Logistic Model Trees"
 reps <- 5
 
-TrainedModel <- trainModel(methodtag, methodname, repeats = reps)
-TrainedModel
+# Model specific training grid setting
+tunegrid <- expand.grid(.iter=seq(40,90, by = 10))
+
+
+TrainedModel <- trainModel(methodtag, methodname, tunegrid, repeats = reps)
+print(TrainedModel)
 plot(TrainedModel, main = paste(methodname, reps, "repeats"))
 
-#########################################################################
 
-
-#
-##
-###
-#### Logistric Regression ####
-
-methodtag <- "glm"
-methodname <- "Logistric Regression"
-reps <- 10
-
-TrainedModel <- trainModel(methodtag, methodname, logging = TRUE, repeats = reps)
-TrainedModel
-
-finalModel.glm = TrainedModel
-
-
-#
-##
-###
-#### Naive Bayes ####
-
-methodtag <- "nb"
-methodname <- "Naive Bayes"
-reps <- 10
-
-TrainedModel <- trainModel(methodtag, methodname, logging = TRUE, repeats = reps)
-TrainedModel
-
-finalModel.nb = TrainedModel
-
-
-#
-##
-###
-#### SVM ####
-methodtag <- "svmLinear"
-methodname <- "Support Vector Machine"
-reps <- 10
-
-TrainedModel <- trainModel(methodtag, methodname, logging = TRUE, repeats = reps)
-TrainedModel
-
-finalModel.svm = TrainedModel
-
-#
-##
-###
-#### Linear Discriminant Analysis ####
-methodtag <- "lda"
-methodname <- "Linear Discriminant Analysis"
-reps <- 10
-
-TrainedModel <- trainModel(methodtag, methodname, logging = TRUE, repeats = reps)
-TrainedModel
-
-finalModel.lda = TrainedModel
-
-#
-##
-###
-#### Quadratic Discriminant Analysis ####
-methodtag <- "qda"
-methodname <- "Quadratic Discriminant Analysis"
-reps <- 10
-
-#selecting subset of variables, since using all variables is creating errors
-selectedPreds = c(
-  'PRO_msrp',
-  'CAS_Initial_Return_Code_C2',
-  'CAS_Initial_Return_Code_C5',
-  'CAS_WarrantyStatus_N',
-  'PRO_Segment_PND',
-  'PRO_Family_FIT_VIVOSMART',
-  'PRO_Family_PND_Advance',
-  'PRO_SFPP_Market_DEF',
-  'PRO_SFPP_Market_FIT',
-  'PRO_WPC_Product_Series_vivosmarthr',
-  'PC1')
-
-TrainedModel <- trainModel(methodtag, methodname, logging = F, repeats = reps, onlycolumns = selectedPreds)
-TrainedModel
 
 
 ```
