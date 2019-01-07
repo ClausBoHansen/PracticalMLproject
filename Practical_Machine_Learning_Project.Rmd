@@ -349,6 +349,7 @@ plot(TrainedModel, main = paste(methodname, reps, "repeats"))
 ```
 
 Of the two presented model, KNN and Random Forests, KNN clearly performs best. So I select KNN with 1 neighbor as the final model.
+Based on the validation set, the expected out-of-sample error is 1 - 0-9901 = 0.99%
 
 # Predictions on test set
 
