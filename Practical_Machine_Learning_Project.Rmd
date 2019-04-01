@@ -2,9 +2,7 @@
 title: "Practical Machine Learning Project"
 author: "Claus Bo Hansen"
 date: "January 7, 2019"
-output:
-  html_document:
-    theme: null
+output: html_document
 ---
 
 <style type="text/css">
@@ -180,8 +178,7 @@ boruta_train <- Boruta(classe ~ ., data = data_train)
 
 # Print result
 print(boruta_train)
-# Commented out to keep html file size down (to Github can show file)
-#plot(boruta_train)
+plot(boruta_train)
 
 ```
 
@@ -206,8 +203,7 @@ predictorvars <- data_train %>%
 PCAobject <- prcomp(predictorvars)
 
 # Scree plot
-# Commented out to keep html file size down (to Github can show file)
-#fviz_eig(PCAobject)
+fviz_eig(PCAobject)
 
 # Get Eigen values and variance explained
 get_eigenvalue(PCAobject)
@@ -246,8 +242,7 @@ cor_input <- all_cols[!(all_cols %in% c("classe"))]
 corvars <- data_train %>%
   select(cor_input)
 
-# Commented out to keep html file size down (to Github can show file)
-#corrplot(cor(corvars), type = "upper")
+corrplot(cor(corvars), type = "upper")
 
 ```
 
@@ -331,8 +326,7 @@ tunegrid <- expand.grid(.k=c(1:4))
 
 TrainedModel <- trainModel(methodtag, methodname, tunegrid, repeats = reps)
 print(TrainedModel)
-# Commented out to keep html file size down (to Github can show file)
-#plot(TrainedModel, main = paste(methodname, reps, "repeats"))
+plot(TrainedModel, main = paste(methodname, reps, "repeats"))
 
 
 
@@ -348,8 +342,7 @@ tunegrid <- expand.grid(.mtry=c(1:10))
 
 TrainedModel <- trainModel(methodtag, methodname, tunegrid, folds = folds, repeats = reps)
 print(TrainedModel)
-# Commented out to keep html file size down (to Github can show file)
-#plot(TrainedModel, main = paste(methodname, reps, "repeats"))
+plot(TrainedModel, main = paste(methodname, reps, "repeats"))
 
 
 
