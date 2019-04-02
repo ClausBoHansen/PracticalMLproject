@@ -2,7 +2,8 @@
 title: "Practical Machine Learning Project"
 author: "Claus Bo Hansen"
 date: "January 7, 2019"
-output: html_document
+#output: html_document
+output: rmarkdown::html_vignette
 ---
 
 <style type="text/css">
